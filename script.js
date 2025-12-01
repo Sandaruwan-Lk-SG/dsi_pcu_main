@@ -1,17 +1,25 @@
 // ==========================================
-// PCU INVENTORY FRONTEND SCRIPT (V2)
+// PCU INVENTORY FRONTEND SCRIPT (V2) - FINAL LOGIN LOGIC
 // ==========================================
 
-// Back-end URL එක ඔබේ Railway Deployment URL එක විය යුතුයි
+// ඔබ ලබා දුන් නිවැරදි Backend URL එක මෙහි ඇත
 const BACKEND_URL = 'https://pcu-inventory-backend-production.up.railway.app'; 
 
-document.getElementById('loginForm').addEventListener('submit', handleLogin);
+document.addEventListener('DOMContentLoaded', () => {
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+    } else {
+        console.error("Error: loginForm element not found in index.html");
+    }
+});
 
 async function handleLogin(event) {
     event.preventDefault();
     const pin = document.getElementById('pinInput').value;
     const messageDiv = document.getElementById('message');
-    messageDiv.textContent = 'Logging in...';
+    
+    messageDiv.textContent = 'Logging in... Please wait.';
     messageDiv.style.color = '#f1faee'; // White/Default color
 
     if (pin.length !== 4) {
@@ -24,35 +32,40 @@ async function handleLogin(event) {
     let role = null;
     let username = null;
 
-    // 1. Try MASTER ADMIN Login first (to access user management page)
-    try {
-        const masterResponse = await fetch(`${BACKEND_URL}/api/master-login`, {
+    // Helper function to send the POST request
+    const sendLoginRequest = async (endpoint) => {
+        return fetch(`${BACKEND_URL}${endpoint}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ pin: pin })
+            // CRITICAL: Content-Type must be application/json
+            headers: { 'Content-Type': 'application/json' }, 
+            // CRITICAL: Key must be 'pin' to match server.js req.body.pin
+            body: JSON.stringify({ pin: pin }) 
         });
+    };
+
+    // 1. Try MASTER ADMIN Login (Checks against Railway Env Var)
+    try {
+        const masterResponse = await sendLoginRequest('/api/master-login');
         
-        const data = await masterResponse.json();
-        if (masterResponse.ok && data.role === 'master') {
-            success = true;
-            role = 'master';
-            username = 'Master Admin'; 
-            // Save the PIN temporarily for masterAuth check on the next page
-            localStorage.setItem('masterPin', pin); 
+        if (masterResponse.ok) {
+            const data = await masterResponse.json();
+            if (data.role === 'master') {
+                success = true;
+                role = 'master';
+                username = 'Master Admin'; 
+                // Store PIN to be used as 'X-Master-Pin' header later
+                localStorage.setItem('masterPin', pin); 
+            }
         }
     } catch (e) {
-        // Network Error for master login (ignore, proceed to regular login)
+        // Ignore specific error and proceed to regular login
+        console.warn("Master Login attempt failed (could be network or invalid pin). Proceeding to user login.");
     }
 
-    // 2. If not master, try REGULAR User Login (Admin/User)
+    // 2. If not Master, try REGULAR User Login (Checks against PostgreSQL Database)
     if (!success) {
         try {
-            const userResponse = await fetch(`${BACKEND_URL}/api/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pin: pin })
-            });
-
+            const userResponse = await sendLoginRequest('/api/login');
             const data = await userResponse.json();
 
             if (userResponse.ok) {
@@ -60,17 +73,20 @@ async function handleLogin(event) {
                 role = data.role;
                 username = data.username;
 
-                // Save user credentials (for fetching items/transactions)
+                // Store credentials for the Inventory Dashboard
                 localStorage.setItem('userRole', role);
                 localStorage.setItem('username', username);
-                localStorage.setItem('userPin', pin); // Using PIN as simple session key for now
+                localStorage.setItem('userPin', pin); // Using PIN as simple session key
             } else {
-                messageDiv.textContent = data.message || 'Invalid PIN or Network Error.';
+                // Handle 401 Unauthorized or other server-side errors
+                messageDiv.textContent = data.message || 'Invalid PIN or unknown error.';
                 messageDiv.style.color = '#e63946'; // Red
             }
         } catch (e) {
-            messageDiv.textContent = 'Network Error. Check if backend is running.';
+            // Handle true Network/CORS/502 errors
+            messageDiv.textContent = 'Network Error! Check if backend is running at the correct URL.';
             messageDiv.style.color = '#e63946'; // Red
+            console.error("Login Network Error:", e);
         }
     }
 
@@ -78,13 +94,14 @@ async function handleLogin(event) {
     if (success) {
         messageDiv.textContent = `Login Successful! Welcome, ${username}.`;
         messageDiv.style.color = '#64ffda'; // Success color
+        
+        // Wait a moment for visual confirmation before navigating
+        await new Promise(r => setTimeout(r, 500)); 
 
         if (role === 'master') {
-            // Master Admin is directed to the user management page
             window.location.href = 'user_management.html';
         } else {
-            // Regular Admin/User is directed to the main inventory dashboard
-            // NOTE: You will need to create 'inventory_dashboard.html' later.
+            // Go to the main inventory page
             window.location.href = 'inventory_dashboard.html'; 
         }
     }
