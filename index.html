@@ -1,1 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PCU Inventory System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --secondary: #6366f1;
+            --success: #10b981;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --glass: rgba(255, 255, 255, 0.95);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* --- Common Card Styles --- */
+        .card {
+            background: var(--glass);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 500px;
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease;
+        }
+
+        h1, h2 {
+            color: var(--dark);
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #64748b;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        /* --- Inputs & Selects --- */
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 1.5rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            outline: none;
+            background: #fff;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+        }
+
+        /* --- Buttons --- */
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+        }
+
+        .btn-success {
+            background: var(--success);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+        }
+
+        /* --- Login Screen Specific --- */
+        #login-screen {
+            display: block; /* Managed by JS */
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .login-header i {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        /* --- App Screen Specific --- */
+        #app {
+            display: none; /* Managed by JS */
+            max-width: 600px;
+        }
+
+        .transaction-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .full-width {
+            grid-column: span 2;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .status-bar {
+            background: #e0e7ff;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* --- Mobile Tweaks --- */
+        @media (max-width: 480px) {
+            .transaction-grid {
+                grid-template-columns: 1fr;
+            }
+            .full-width {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen" class="card">
+        <div class="login-header">
+            <i class="fa-solid fa-boxes-stacked"></i>
+            <h1>PCU Inventory</h1>
+            <p style="color: #64748b;">Secure Login</p>
+        </div>
+
+        <label>Select User</label>
+        <select id="login-name">
+            <option value="Admin 1">Admin 1</option>
+            <option value="Admin 2">Admin 2</option>
+            <option value="User 1">User 1</option>
+            <option value="User 2">User 2</option>
+        </select>
+
+        <label>Enter PIN</label>
+        <input type="password" id="login-pin" placeholder="****" maxlength="4">
+
+        <button id="btn-login" class="btn btn-primary">
+            <i class="fa-solid fa-right-to-bracket"></i> Login System
+        </button>
+    </div>
+
+    <div id="app" class="card">
+        <div class="status-bar">
+            <i class="fa-solid fa-user-check"></i> <span id="user-display">Logged In</span>
+        </div>
+
+        <h2><i class="fa-solid fa-dolly"></i> Manage Stock</h2>
+
+        <div class="transaction-grid">
+            <div class="full-width">
+                <label>Item SKU or Name</label>
+                <input type="text" id="item-search" list="item-list" placeholder="Scan or Type to Search...">
+                <datalist id="item-list">
+                    </datalist>
+            </div>
+
+            <div>
+                <label>Quantity</label>
+                <input type="number" id="trans-qty" placeholder="0" min="1">
+            </div>
+
+            <div>
+                <label>Line / Destination</label>
+                <input type="text" id="trans-destination" placeholder="Ex: Line 05">
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button id="btn-in" class="btn btn-success">
+                <i class="fa-solid fa-arrow-down"></i> IN (+)
+            </button>
+            
+            <button id="btn-out" class="btn btn-danger">
+                OUT (-) <i class="fa-solid fa-arrow-up"></i>
+            </button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+
+</body>
+</html>
 
