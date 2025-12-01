@@ -5,19 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PCU Inventory Login</title>
     <style>
-        /* Basic Glassmorphism CSS - (CSS සම්පූර්ණයෙන් නැවත ඇතුළත් කර ඇත) */
+        /* CSS: UI ගැටලුව නිරාකරණය කිරීම සඳහා සම්පූර්ණ CSS එක මෙහි ඇත */
         body {
             font-family: Arial, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background: linear-gradient(135deg, #a8dadc, #457b9d);
-            margin: 0; /* Add margin 0 to ensure full page coverage */
+            background: linear-gradient(135deg, #a8dadc, #457b9d); /* Blue Gradient */
+            margin: 0; 
         }
         .container {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.15); /* Transparent white */
+            backdrop-filter: blur(10px); /* Glass effect */
             -webkit-backdrop-filter: blur(10px);
             border-radius: 15px;
             border: 1px solid rgba(255, 255, 255, 0.3);
@@ -33,8 +33,8 @@
             color: #f1faee;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
         }
-        /* Input fields are targeted correctly */
-        input[type="password"] { 
+        /* Input field styles for the Password */
+        input[type="password"] {
             width: 100%;
             padding: 12px 20px;
             margin: 8px 0;
@@ -47,7 +47,7 @@
             text-align: center;
         }
         button {
-            background-color: #e63946;
+            background-color: #e63946; /* Red primary action color */
             color: white;
             padding: 14px 20px;
             margin: 20px 0 10px;
