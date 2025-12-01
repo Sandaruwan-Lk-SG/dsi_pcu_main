@@ -1,92 +1,185 @@
 // ==========================================
-// PCU INVENTORY FRONTEND SCRIPT (V2) - FINAL CORRECTED PASSWORD LOGIN
+// USER MANAGEMENT SCRIPT (MASTER ADMIN ONLY) - FINAL CORRECTED VERSION
 // ==========================================
 
-const BACKEND_URL = 'https://pcu-inventory-backend-production.up.railway.app'; 
+const BACKEND_URL = 'https://pcu-inventory-backend-production.up.railway.app'; 
+const masterPin = localStorage.getItem('masterPin');
+const userListBody = document.querySelector('#userList tbody');
+const addMessageDiv = document.getElementById('addMessage');
+const listMessageDiv = document.getElementById('listMessage');
 
-document.addEventListener('DOMContentLoaded', () => {
-    const loginForm = document.getElementById('loginForm');
-    if (loginForm) {
-        loginForm.addEventListener('submit', handleLogin);
-    }
+// ----------------------------------------------------
+// INITIALIZATION CHECK
+// ----------------------------------------------------
+if (!masterPin) {
+    alert('Unauthorized Access. Please login as Master Admin.');
+    window.location.href = 'index.html';
+}
+
+// ----------------------------------------------------
+// 1. Fetch and Display Users (GET /api/users)
+// ----------------------------------------------------
+async function fetchUsers() {
+    listMessageDiv.textContent = 'Loading users...';
+    listMessageDiv.style.color = '#f1faee';
+    userListBody.innerHTML = ''; // Clear existing rows
+
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/users`, {
+            method: 'GET',
+            headers: {
+                'X-Master-Pin': masterPin 
+            }
+        });
+        
+        if (response.status === 403) {
+             listMessageDiv.textContent = 'AUTHORIZATION FAILED: Check MASTER_ADMIN_PIN value in Railway Env Vars.';
+             listMessageDiv.style.color = '#e63946';
+             // Stop further execution if authorization fails
+             throw new Error('403 Forbidden: Master Admin PIN rejected by server.');
+        }
+        if (!response.ok) {
+            throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
+        }
+
+        const users = await response.json();
+        listMessageDiv.textContent = users.length === 0 ? 'No users found.' : '';
+        listMessageDiv.style.color = users.length === 0 ? '#f1faee' : 'transparent'; // Hide message if users exist
+
+        // === Logic to display users ===
+        users.forEach(user => {
+            const row = userListBody.insertRow();
+            // Note: Assuming 'id' is available, otherwise use index or a unique field
+            row.insertCell(0).textContent = user.id; 
+            row.insertCell(1).textContent = user.username;
+            row.insertCell(2).textContent = user.role.toUpperCase();
+
+            const actionCell = row.insertCell(3);
+            const removeButton = document.createElement('button');
+            removeButton.textContent = 'Remove';
+            removeButton.className = 'remove-btn';
+            // IMPORTANT: Passing 'username' for removal, ensure backend uses 'username' in DELETE query
+            removeButton.onclick = () => removeUser(user.username); 
+            actionCell.appendChild(removeButton);
+        });
+        
+    } catch (error) {
+        // Only update error message if it wasn't the specific 403 authorization error
+        if (!error.message.includes('403 Forbidden')) {
+            listMessageDiv.textContent = `Error loading users: ${error.message}`;
+            listMessageDiv.style.color = '#e63946';
+        }
+        console.error("Fetch Users Error:", error);
+    }
+}
+
+// ----------------------------------------------------
+// 2. Add New User (POST /api/users)
+// ----------------------------------------------------
+document.getElementById('addUserForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    addMessageDiv.textContent = 'Adding user...';
+    addMessageDiv.style.color = '#f1faee';
+
+    const username = document.getElementById('newUsername').value.trim();
+    const role = document.getElementById('newRole').value;
+    const pin = document.getElementById('newPin').value; // Password
+
+    if (pin.length < 8) { 
+        addMessageDiv.textContent = 'Password must be at least 8 characters long.';
+        addMessageDiv.style.color = '#e63946';
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/users`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Master-Pin': masterPin 
+            },
+            body: JSON.stringify({ 
+                username: username, 
+                role: role, 
+                pin: pin 
+            }) 
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) {
+            addMessageDiv.textContent = `User ${username} created successfully!`;
+            addMessageDiv.style.color = '#64ffda';
+            document.getElementById('addUserForm').reset();
+            fetchUsers(); // Refresh list after successful creation
+        } else if (response.status === 409) {
+             addMessageDiv.textContent = `Error: Username '${username}' already exists.`;
+             addMessageDiv.style.color = '#e63946';
+        } else if (response.status === 403) {
+             addMessageDiv.textContent = 'AUTHORIZATION FAILED: Check MASTER_ADMIN_PIN.';
+             addMessageDiv.style.color = '#e63946';
+        } else {
+            addMessageDiv.textContent = `Failed to add user: ${data.message || response.statusText}`;
+            addMessageDiv.style.color = '#e63946';
+        }
+    } catch (error) {
+        addMessageDiv.textContent = 'Network Error! Failed to connect to backend.';
+        addMessageDiv.style.color = '#e63946';
+        console.error("Add User Network Error:", error);
+    }
 });
 
-async function handleLogin(event) {
-    event.preventDefault();
-    const pin = document.getElementById('pinInput').value; // 'pin' is now the password
-    const messageDiv = document.getElementById('message');
-    
-    messageDiv.textContent = 'Authenticating... Please wait.';
-    messageDiv.style.color = '#f1faee'; 
 
-    // CRITICAL FIX: Removed the pin.length !== 4 check here.
-    if (!pin) { 
-        messageDiv.textContent = 'Password cannot be empty.';
-        messageDiv.style.color = '#e63946';
-        return;
+// ----------------------------------------------------
+// 3. Remove Existing User (DELETE /api/users/:username)
+// ----------------------------------------------------
+async function removeUser(username) {
+    if (!confirm(`Are you sure you want to remove the user: ${username}? This action is permanent.`)) {
+        return; // No action if user cancels confirmation
     }
 
-    let success = false;
-    let role = null;
-    let username = null;
-
-    const sendLoginRequest = async (endpoint) => {
-        return fetch(`${BACKEND_URL}${endpoint}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }, 
-            body: JSON.stringify({ pin: pin }) 
-        });
-    };
-
-    // 1. Try MASTER ADMIN Login 
     try {
-        const masterResponse = await sendLoginRequest('/api/master-login');
-        const data = await masterResponse.json();
-
-        if (masterResponse.ok && data.role === 'master') {
-            success = true;
-            role = 'master';
-            username = 'Master Admin'; 
-            localStorage.setItem('masterPin', pin); 
-        } 
-    } catch (e) {
-        console.warn("Master Login attempt failed (Network error or invalid password).");
-    }
-
-    // 2. Try REGULAR User Login
-    if (!success) {
-        try {
-            const userResponse = await sendLoginRequest('/api/login');
-            const data = await userResponse.json();
-
-            if (userResponse.ok) {
-                success = true;
-                role = data.role;
-                username = data.username;
-                localStorage.setItem('userRole', role);
-                localStorage.setItem('username', username);
-                localStorage.setItem('userPin', pin); 
-            } else {
-                messageDiv.textContent = data.message || 'Invalid Password or unknown error.';
-                messageDiv.style.color = '#e63946'; 
+        listMessageDiv.textContent = `Attempting to remove user ${username}...`;
+        listMessageDiv.style.color = '#f1faee';
+        
+        // IMPORTANT: The API endpoint uses the username for deletion
+        const response = await fetch(`${BACKEND_URL}/api/users/${username}`, {
+            method: 'DELETE', 
+            headers: {
+                'X-Master-Pin': masterPin
             }
-        } catch (e) {
-            messageDiv.textContent = 'Network Error! Check if backend is running.';
-            messageDiv.style.color = '#e63946'; 
-            console.error("User Login Network Error:", e);
+        });
+
+        if (response.status === 403) {
+            alert('AUTHORIZATION FAILED: Master Admin PIN rejected. User not deleted.');
+            listMessageDiv.textContent = 'AUTHORIZATION FAILED: Check MASTER_ADMIN_PIN.';
+            listMessageDiv.style.color = '#e63946';
+            return;
         }
-    }
 
-    // 3. Handle Navigation
-    if (success) {
-        messageDiv.textContent = `Login Successful! Welcome, ${username}.`;
-        messageDiv.style.color = '#64ffda'; 
-        await new Promise(r => setTimeout(r, 500)); 
-
-        if (role === 'master' || role === 'admin') {
-            window.location.href = 'user_management.html';
+        if (response.ok || response.status === 204) { // 204 No Content is common for successful DELETE
+            listMessageDiv.textContent = `User ${username} successfully removed.`;
+            listMessageDiv.style.color = '#64ffda';
+            
+            fetchUsers(); // Reload the user list to update the table immediately
+        } else if (response.status === 404) {
+            alert(`User ${username} not found in the database.`);
+            listMessageDiv.textContent = `User ${username} not found.`;
+            listMessageDiv.style.color = '#e63946';
         } else {
-            window.location.href = 'inventory_dashboard.html'; 
+            const errorText = await response.text();
+            alert(`Failed to remove user: ${errorText || response.statusText}`);
+            listMessageDiv.textContent = `Deletion failed: ${response.statusText}`;
+            listMessageDiv.style.color = '#e63946';
         }
+    } catch (error) {
+        console.error("Remove User Error:", error);
+        listMessageDiv.textContent = 'Network or Server Error during deletion.';
+        listMessageDiv.style.color = '#e63946';
     }
 }
+
+// ----------------------------------------------------
+// INITIAL EXECUTION
+// ----------------------------------------------------
+fetchUsers();
