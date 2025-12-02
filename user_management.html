@@ -3,96 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Management - Master Admin</title>
-    <style>
-        /* CSS is correct and unchanged */
-        body {
-            font-family: Arial, sans-serif;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #a8dadc, #457b9d); 
-            padding: 20px;
-            color: #f1faee;
-        }
-        .container {
-            background: rgba(255, 255, 255, 0.15); 
-            backdrop-filter: blur(10px); 
-            border-radius: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            padding: 30px;
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-            max-width: 800px;
-            margin: 50px auto;
-        }
-        h2 { color: #f1faee; margin-bottom: 20px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="text"], input[type="password"], select {
-            width: 100%;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            background: rgba(255, 255, 255, 0.9);
-            box-sizing: border-box;
-        }
-        button {
-            background-color: #e63946;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 10px;
-            transition: background-color 0.3s;
-        }
-        button:hover { background-color: #c9343f; }
-        #userList {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        #userList th, #userList td {
-            padding: 10px;
-            text-align: left;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-        }
-        #userList th {
-            background: rgba(255, 255, 255, 0.3);
-        }
-        .remove-btn {
-            background-color: #f44336;
-        }
-    </style>
-</head>
+    <title>Master Admin - User Management</title>
+    </head>
 <body>
-    <div class="container">
-        <h2>Master Admin - User Management</h2>
-        <a href="index.html" style="color: #64ffda; display: block; margin-bottom: 20px;">← Back to Login</a>
+    <h1>Master Admin Panel</h1>
+    <h2>User Management</h2>
 
+    <div id="addUserSection">
         <h3>Add New User</h3>
         <form id="addUserForm">
-            <div class="form-group">
-                <label for="newUsername">Username:</label>
-                <input type="text" id="newUsername" required>
-            </div>
-            <div class="form-group">
-                <label for="newRole">Role:</label>
-                <select id="newRole" required>
-                    <option value="user">User</option>
-                    <option value="admin">Admin</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="newPin">Password (Min 8 characters):</label>
-                <input type="password" id="newPin" required> 
-            </div>
-            <button type="submit">Add User</button>
-            <div id="addMessage" style="margin-top: 10px;"></div>
+            <input type="text" id="newUsername" placeholder="Username" required><br>
+            <input type="password" id="newPin" placeholder="Pin (min 8 chars)" required><br>
+            <select id="newRole" required>
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+            </select><br><br>
+            <button type="submit">Create User</button>
         </form>
+        <p id="addMessage" style="margin-top: 10px;"></p>
+    </div>
 
-        <hr style="border-top: 1px solid rgba(255, 255, 255, 0.3); margin: 30px 0;">
+    <hr>
 
+    <div id="listUserSection">
         <h3>Existing Users</h3>
-        <table id="userList">
+        <p id="listMessage" style="margin-bottom: 10px;"></p>
+        <table id="userList" border="1">
             <thead>
                 <tr>
                     <th>ID</th>
@@ -104,9 +40,8 @@
             <tbody>
                 </tbody>
         </table>
-        <div id="listMessage" style="margin-top: 10px;"></div>
     </div>
 
-    <script src="user_management.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
