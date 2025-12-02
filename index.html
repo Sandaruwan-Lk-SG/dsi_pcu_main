@@ -4,16 +4,132 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PCU Inventory Login</title>
+    <style>
+        /* --- 1. Global Styles and Typography --- */
+        :root {
+            --primary-color: #3f51b5; /* Indigo */
+            --primary-dark: #303f9f;
+            --accent-color: #ffc107; /* Amber */
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --error-color: #f44336;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        h1 {
+            color: var(--primary-dark);
+            font-size: 2em;
+            margin-bottom: 0.5em;
+        }
+
+        h2 {
+            color: #777;
+            font-size: 1.2em;
+            margin-top: 0;
+            margin-bottom: 1.5em;
+        }
+
+        /* --- 2. Card Container and Form Layout --- */
+        .login-container {
+            background-color: var(--card-bg);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        #masterLoginForm {
+            display: flex;
+            flex-direction: column;
+            gap: 15px; /* Spacing between form elements */
+        }
+
+        /* --- 3. Input Styling --- */
+        #masterPinInput {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #cccccc;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            box-sizing: border-box;
+        }
+
+        #masterPinInput:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(63, 81, 181, 0.2);
+            outline: none;
+        }
+
+        /* --- 4. Button Styling --- */
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        button:active {
+            transform: scale(0.99);
+        }
+
+        /* --- 5. Message and Status Styling --- */
+        #loginMessage {
+            font-weight: 500;
+            min-height: 20px; /* To prevent layout shift */
+            padding-top: 10px;
+        }
+
+        /* Style for loading/success messages */
+        #loginMessage:not(:empty) {
+            padding: 8px;
+            border-radius: 4px;
+        }
+        
+        /* Dynamic message coloring (optional, depends on your JS setting classes) */
+        #loginMessage[data-status="error"] {
+            color: var(--error-color);
+        }
+        #loginMessage[data-status="success"] {
+            color: #4CAF50;
+        }
+        
+    </style>
 </head>
 <body>
-    <h1>PCU Inventory System</h1>
-    <h2>Master Admin Login</h2>
+    <div class="login-container">
+        <h1>PCU Inventory System</h1>
+        <h2>Master Admin Login</h2>
 
-    <form id="masterLoginForm">
-        <input type="password" id="masterPinInput" placeholder="Master Admin PIN" required autofocus><br><br>
-        <button type="submit">Login</button>
-    </form>
-    <p id="loginMessage" style="margin-top: 15px;"></p>
+        <form id="masterLoginForm">
+            <input type="password" id="masterPinInput" placeholder="Master Admin PIN" required autofocus><br><br>
+            <button type="submit">Login</button>
+        </form>
+        <p id="loginMessage" style="margin-top: 15px;"></p>
+    </div>
 
     <script>
         const BACKEND_URL = 'https://pcu-inventory-backend-production.up.railway.app';
@@ -25,6 +141,8 @@
             e.preventDefault();
             const pin = pinInput.value;
             messageDiv.textContent = 'Attempting login...';
+            messageDiv.style.color = 'var(--primary-dark)'; // Set color for loading state
+            messageDiv.removeAttribute('data-status');
 
             try {
                 const response = await fetch(`${BACKEND_URL}/api/master-login`, {
@@ -38,13 +156,24 @@
                 if (response.ok && data.success) {
                     localStorage.setItem('masterPin', pin); 
                     messageDiv.textContent = "Login Successful. Redirecting...";
-                    window.location.href = 'user_management.html'; 
+                    messageDiv.style.color = '#4CAF50';
+                    messageDiv.setAttribute('data-status', 'success');
+                    
+                    // Delay the redirect slightly to show success message
+                    setTimeout(() => {
+                         window.location.href = 'user_management.html'; 
+                    }, 500); 
+                    
                 } else {
                     messageDiv.textContent = data.message || "Invalid credentials.";
+                    messageDiv.style.color = 'var(--error-color)';
+                    messageDiv.setAttribute('data-status', 'error');
                 }
             } catch (error) {
                 console.error("Login Network Error:", error);
                 messageDiv.textContent = "Network Error! Cannot connect to backend.";
+                messageDiv.style.color = 'var(--error-color)';
+                messageDiv.setAttribute('data-status', 'error');
             }
         });
     </script>
