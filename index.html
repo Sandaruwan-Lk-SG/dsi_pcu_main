@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PCU Inventory Login</title>
-    </head>
+</head>
 <body>
     <h1>PCU Inventory System</h1>
     <h2>Master Admin Login</h2>
@@ -36,20 +36,15 @@
                 const data = await response.json();
                 
                 if (response.ok && data.success) {
-                    // Save the PIN securely (for masterAuth header)
                     localStorage.setItem('masterPin', pin); 
                     messageDiv.textContent = "Login Successful. Redirecting...";
-                    messageDiv.style.color = '#4CAF50';
-                    // Redirect to the management page
                     window.location.href = 'user_management.html'; 
                 } else {
                     messageDiv.textContent = data.message || "Invalid credentials.";
-                    messageDiv.style.color = '#F44336';
                 }
             } catch (error) {
                 console.error("Login Network Error:", error);
                 messageDiv.textContent = "Network Error! Cannot connect to backend.";
-                messageDiv.style.color = '#F44336';
             }
         });
     </script>
