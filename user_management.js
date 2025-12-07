@@ -2,7 +2,7 @@
 // USER MANAGEMENT FRONTEND SCRIPT (script.js)
 // ==========================================
 
-const BACKEND_URL = 'https://https://masterbackendpcu-production.up.railway.app'; 
+const BACKEND_URL = 'https://masterbackendpcu-production.up.railway.app'; 
 const masterPin = localStorage.getItem('masterPin');
 const userListBody = document.querySelector('#userList tbody');
 const addMessageDiv = document.getElementById('addMessage');
